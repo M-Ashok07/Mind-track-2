@@ -31,17 +31,15 @@ phases:
       - echo "Building Docker image..."
       - docker build -t $IMAGE_URI -f Dockerfile .
 
-  post_build:
-    commands:
-      - echo "Pushing Docker image to ECR..."
-      - docker push $IMAGE_URI
-      - echo "Updating kubeconfig for EKS cluster..."
-      - aws eks update-kubeconfig --region $REGION --name $CLUSTER
-      - echo "Applying Kubernetes manifests..."
-      - kubectl apply -f k8s/deployment-final.yaml -n mind-track
-      - kubectl apply -f k8s/service.yaml -n mind-track
-      - kubectl apply -f k8s/ingress.yaml -n mind-track
-      - echo "Deployment completed successfully!"
+ post_build:
+  commands:
+    - echo "Pushing Docker image..."
+    - docker push $IMAGE_URI
+    - echo "Updating kubeconfig..."
+    - aws eks update-kubeconfig --region $REGION --name $CLUSTER
+    - echo "Applying all manifests in k8s folder..."
+    - for f in dist/k8s/*.yaml; do kubectl apply -f $f -n mind-track; done
+
 
 # Optional: remove artifacts section if not needed
 # artifacts:
