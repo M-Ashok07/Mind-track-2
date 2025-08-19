@@ -42,7 +42,3 @@ phases:
       - kubectl apply -f dist/k8s/deployment-final.yaml
       - kubectl apply -f dist/k8s/service.yaml
       - kubectl apply -f dist/k8s/ingress.yaml
-
-artifacts:
-  files:
-    - dist/k8s/deployment-final.yaml
