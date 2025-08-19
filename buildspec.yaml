@@ -34,9 +34,8 @@ phases:
       - sed -i "s|mind-track-app:latest|$IMAGE_URI|g" $CODEBUILD_SRC_DIR/k8s/deployment-final.yaml
       - echo "Updating kubeconfig for EKS..."
       - aws eks update-kubeconfig --region $REGION --name $CLUSTER
-      - echo "Validating Kubernetes manifests..."
-      - kubectl apply --dry-run=client -f $CODEBUILD_SRC_DIR/k8s/deployment-final.yaml -n $NAMESPACE
+      - echo "Validating Kubernetes manifests...
       - echo "Applying Kubernetes manifests..."
-      - kubectl apply -f $CODEBUILD_SRC_DIR/k8s/deployment-final.yaml -n $NAMESPACE
-      - kubectl apply -f $CODEBUILD_SRC_DIR/k8s/service.yaml -n $NAMESPACE
-      - kubectl apply -f $CODEBUILD_SRC_DIR/k8s/ingress.yaml -n $NAMESPACE
+      - kubectl apply -f k8s/deployment-final.yaml -n $NAMESPACE
+      - kubectl apply -f k8s/service.yaml -n $NAMESPACE
+      - kubectl apply -f k8s/ingress.yaml -n $NAMESPACE
