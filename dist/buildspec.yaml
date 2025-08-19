@@ -21,6 +21,8 @@ phases:
       - COMMIT_ID=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c1-7)
       - IMAGE_URI="304534110140.dkr.ecr.${REGION}.amazonaws.com/${ECR_REPO}:${COMMIT_ID}"
       - echo "Using IMAGE_URI=$IMAGE_URI"
+      - export IMAGE_TAG=latest
+      - export NAMESPACE=mind-track
 
   build:
     commands:
@@ -28,6 +30,10 @@ phases:
       - pwd && ls -al
       - echo "Building Docker image..."
       - docker build -t $IMAGE_URI -f dist/Dockerfile dist/
+      - envsubst < k8s/deployment.yaml > k8s/deployment-final.yaml
+      - kubectl apply -f k8s/deployment-final.yaml -n mind-track
+      - kubectl apply -f k8s/service.yaml -n mind-track
+      - kubectl apply -f k8s/ingress.yaml -n mind-track
 
   post_build:
     commands:
