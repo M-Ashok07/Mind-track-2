@@ -1,0 +1,48 @@
+version: 0.2
+
+env:
+  variables:
+    REGION: ap-south-1
+    CLUSTER: mind-track-cluster
+    ECR_REPO: mind-track-app
+    NAMESPACE: mind-track
+
+phases:
+  install:
+    commands:
+      - echo "Installing kubectl..."
+      - curl -sSL -o /usr/local/bin/kubectl https://amazon-eks.s3.${REGION}.amazonaws.com/1.29.0/2024-04-19/bin/linux/amd64/kubectl
+      - chmod +x /usr/local/bin/kubectl
+      - echo "Installing awscli..."
+      - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+      - unzip awscliv2.zip
+      - sudo ./aws/install
+      - aws --version
+
+  pre_build:
+    commands:
+      - echo "Logging into Amazon ECR..."
+      - aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin 304534110140.dkr.ecr.${REGION}.amazonaws.com
+      - COMMIT_ID=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c1-7)
+      - IMAGE_URI="304534110140.dkr.ecr.${REGION}.amazonaws.com/${ECR_REPO}:${COMMIT_ID}"
+      - echo "IMAGE_URI=$IMAGE_URI"
+
+  build:
+    commands:
+      - echo "Building Docker image..."
+      - docker build -t $IMAGE_URI -f Dockerfile .
+
+  post_build:
+    commands:
+      - echo "Pushing Docker image to ECR..."
+      - docker push $IMAGE_URI
+      - echo "Replacing image URI in Kubernetes deployment..."
+      - sed -i "s|mind-track-app:latest|$IMAGE_URI|g" $CODEBUILD_SRC_DIR/k8s/deployment-final.yaml
+      - echo "Updating kubeconfig for EKS..."
+      - aws eks update-kubeconfig --region $REGION --name $CLUSTER
+      - echo "Validating Kubernetes manifests..."
+      - kubectl apply --dry-run=client -f $CODEBUILD_SRC_DIR/k8s/deployment-final.yaml -n $NAMESPACE
+      - echo "Applying Kubernetes manifests..."
+      - kubectl apply -f $CODEBUILD_SRC_DIR/k8s/deployment-final.yaml -n $NAMESPACE
+      - kubectl apply -f $CODEBUILD_SRC_DIR/k8s/service.yaml -n $NAMESPACE
+      - kubectl apply -f $CODEBUILD_SRC_DIR/k8s/ingress.yaml -n $NAMESPACE
