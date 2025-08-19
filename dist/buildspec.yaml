@@ -8,45 +8,42 @@ env:
 
 phases:
   install:
+    runtime-versions:
+      docker: 20
     commands:
-      - echo "Installing kubectl and envsubst"
-      - curl -sSL -o /usr/local/bin/kubectl https://amazon-eks.s3.$REGION.amazonaws.com/1.29.0/2024-04-19/bin/linux/amd64/kubectl
+      - echo "Installing kubectl, gettext (envsubst), and jq..."
+      - curl -sSL -o /usr/local/bin/kubectl https://amazon-eks.s3.${REGION}.amazonaws.com/1.29.0/2024-04-19/bin/linux/amd64/kubectl
       - chmod +x /usr/local/bin/kubectl
+      - apt-get update && apt-get install -y gettext jq
+
   pre_build:
     commands:
-      - echo "Region is $REGION"
-      - echo "Checking AWS CLI version"
+      - echo "Logging into Amazon ECR..."
       - aws --version
-      - echo "Getting ECR login password"
-      - aws --region $REGION ecr get-login-password || { echo "Failed to get login password"; exit 1; }
-      - echo "Logging into Docker"
-      - aws --region $REGION ecr get-login-password | docker login --username AWS --password-stdin 304534110140.dkr.ecr.ap-south-1.amazonaws.com || { echo "Docker login failed"; exit 1; }
+      - aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin 304534110140.dkr.ecr.${REGION}.amazonaws.com
       - COMMIT_ID=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c1-7)
-      - IMAGE_URI="304534110140.dkr.ecr.ap-south-1.amazonaws.com/$ECR_REPO"
-      - echo "IMAGE_URI=$IMAGE_URI"
+      - IMAGE_URI="304534110140.dkr.ecr.${REGION}.amazonaws.com/${ECR_REPO}:${COMMIT_ID}"
+      - echo "Using IMAGE_URI=$IMAGE_URI"
 
   build:
     commands:
-      - echo "Listing current directory:"
-      - ls -la
-      - echo "Listing dist directory (if exists):"
-      - ls -la dist || echo "No dist directory"
-      - echo "Docker version info:"
-      - docker version
-      - echo "Building Docker image from Dockerfile in ./dist"
-      - docker build -t $IMAGE_URI ./dist
+      - echo "Building Docker image from Dockerfile..."
+      - docker build -t $IMAGE_URI .
 
   post_build:
     commands:
-      - echo "Pushing image..."
+      - echo "Pushing image to ECR..."
       - docker push $IMAGE_URI
-      - echo "Rendering Kubernetes manifests..."
+      - echo "Substituting image URI in deployment manifest..."
       - export IMAGE_URI
-      - envsubst < k8s/deployment.yaml > k8s/deployment.rendered.yaml
-      - mv k8s/deployment.rendered.yaml k8s/deployment.yaml
-      - echo "Configuring kubeconfig..."
-      - aws eks update-kubeconfig --name $CLUSTER --region $REGION
-      - echo "Applying manifests..."
-      - kubectl apply -f k8s/deployment.yaml
+      - envsubst < k8s/deployment.yaml > k8s/deployment-final.yaml
+      - echo "Updating kubeconfig..."
+      - aws eks update-kubeconfig --region $REGION --name $CLUSTER
+      - echo "Applying Kubernetes manifests..."
+      - kubectl apply -f k8s/deployment-final.yaml
       - kubectl apply -f k8s/service.yaml
       - kubectl apply -f k8s/ingress.yaml
+
+artifacts:
+  files:
+    - k8s/deployment-final.yaml
