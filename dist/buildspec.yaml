@@ -42,7 +42,8 @@ phases:
       - docker push $IMAGE_URI
       - echo "Rendering Kubernetes manifests..."
       - export IMAGE_URI
-      - envsubst < k8s/deployment.yaml > k8s/deployment.yaml
+      - envsubst < k8s/deployment.yaml > k8s/deployment.rendered.yaml
+      - mv k8s/deployment.rendered.yaml k8s/deployment.yaml
       - echo "Configuring kubeconfig..."
       - aws eks update-kubeconfig --name $CLUSTER --region $REGION
       - echo "Applying manifests..."
