@@ -8,13 +8,10 @@ env:
 
 phases:
   install:
-    runtime-versions:
-      docker: 20
     commands:
       - echo "Installing kubectl, gettext (envsubst), and jq..."
       - curl -sSL -o /usr/local/bin/kubectl https://amazon-eks.s3.${REGION}.amazonaws.com/1.29.0/2024-04-19/bin/linux/amd64/kubectl
       - chmod +x /usr/local/bin/kubectl
-      - apt-get update && apt-get install -y gettext jq
 
   pre_build:
     commands:
