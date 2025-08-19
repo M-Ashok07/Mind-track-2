@@ -5,6 +5,7 @@ env:
     REGION: ap-south-1
     CLUSTER: mind-track-cluster
     ECR_REPO: mind-track-app
+
 phases:
   install:
     commands:
@@ -12,7 +13,8 @@ phases:
       - curl -sSL -o /usr/local/bin/kubectl https://amazon-eks.s3.$REGION.amazonaws.com/1.29.0/2024-04-19/bin/linux/amd64/kubectl
       - chmod +x /usr/local/bin/kubectl
       - apt install -y gettext jq
-pre_build:
+
+  pre_build:
     commands:
       - echo "Region is $REGION"
       - echo "Trying AWS CLI version"
@@ -20,16 +22,16 @@ pre_build:
       - echo "Trying to get ECR login password"
       - aws --region $REGION ecr get-login-password || { echo "Failed to get login password"; exit 1; }
       - echo "Logging into Docker"
-      - aws --region $REGION ecr get-login-password | docker login --username AWS --password-stdin 304534110140.dkr.ecr.ap-south-1.amazonaws.com || { echo "Docker login failed"; exit 1
-      - echo "Logging in to ECR..."
-      - aws --region $REGION ecr get-login-password | docker login --username AWS --password-stdin 304534110140.dkr.ecr.ap-south-1.amazonaws.com
+      - aws --region $REGION ecr get-login-password | docker login --username AWS --password-stdin 304534110140.dkr.ecr.ap-south-1.amazonaws.com || { echo "Docker login failed"; exit 1; }
       - COMMIT_ID=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c1-7)
-      - IMAGE_URI="304534110140.dkr.ecr.ap-south-1.amazonaws.com/mind-track-app"
+      - IMAGE_URI="304534110140.dkr.ecr.ap-south-1.amazonaws.com/$ECR_REPO"
       - echo "IMAGE_URI=$IMAGE_URI"
+
   build:
     commands:
       - echo "Building Docker image..."
-      - docker build -t 304534110140.dkr.ecr.ap-south-1.amazonaws.com/mind-track-app .
+      - docker build -t $IMAGE_URI .
+
   post_build:
     commands:
       - echo "Pushing image..."
@@ -43,4 +45,3 @@ pre_build:
       - kubectl apply -f k8s/deployment.yaml
       - kubectl apply -f k8s/service.yaml
       - kubectl apply -f k8s/ingress.yaml
-
