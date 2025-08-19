@@ -26,16 +26,16 @@ phases:
       - echo "Building Docker image..."
       - docker build -t $IMAGE_URI -f Dockerfile .
 
-  post_build:
-    commands:
-      - echo "Pushing Docker image to ECR..."
-      - docker push $IMAGE_URI
-      - echo "Replacing image URI in Kubernetes deployment..."
-      - sed -i "s|mind-track-app:latest|$IMAGE_URI|g" $CODEBUILD_SRC_DIR/k8s/deployment-final.yaml
-      - echo "Updating kubeconfig for EKS..."
-      - aws eks update-kubeconfig --region $REGION --name $CLUSTER
-      - echo "Validating Kubernetes manifests..."
-      - echo "Applying Kubernetes manifests..."
-      - kubectl apply -f k8s/deployment-final.yaml -n $NAMESPACE
-      - kubectl apply -f k8s/service.yaml -n $NAMESPACE
-      - kubectl apply -f k8s/ingress.yaml -n $NAMESPACE
+ post_build:
+  commands:
+    - echo "===== IMAGE URI ====="
+    - echo $IMAGE_URI
+    - echo "===== NAMESPACE ====="
+    - echo $NAMESPACE
+    - echo "===== Deployment YAML After Replacement ====="
+    - cat $CODEBUILD_SRC_DIR/k8s/deployment-final.yaml
+    - echo "===== Running kubectl dry-run ====="
+    - kubectl apply -f $CODEBUILD_SRC_DIR/k8s/deployment-final.yaml -n $NAMESPACE --dry-run=client
+    - echo "===== Applying Kubernetes manifests ====="
+    - kubectl apply -f $CODEBUILD_SRC_DIR/k8s/deployment-final.yaml -n $NAMESPACE
+
