@@ -15,14 +15,14 @@ phases:
   pre_build:
     commands:
       - echo "Logging in to ECR..."
-      - aws --region $REGION ecr get-login-password | docker login --username AWS --password-stdin 304534110140.dkr.ecr.$REGION.amazonaws.com
+      - aws --region $REGION ecr get-login-password | docker login --username AWS --password-stdin 304534110140.dkr.ecr.ap-south-1.amazonaws.com
       - COMMIT_ID=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c1-7)
-      - IMAGE_URI="304534110140.dkr.ecr.$REGION.amazonaws.com/$ECR_REPO:$COMMIT_ID"
+      - IMAGE_URI="304534110140.dkr.ecr.ap-south-1.amazonaws.com/mind-track-app"
       - echo "IMAGE_URI=$IMAGE_URI"
   build:
     commands:
       - echo "Building Docker image..."
-      - docker build -t $IMAGE_URI .
+      - docker build -t 304534110140.dkr.ecr.ap-south-1.amazonaws.com/mind-track-app .
   post_build:
     commands:
       - echo "Pushing image..."
