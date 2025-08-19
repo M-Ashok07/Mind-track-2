@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mind-track-deployment
+  labels:
+    app: mind-track
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mind-track
+  template:
+    metadata:
+      labels:
+        app: mind-track
+    spec:
+      containers:
+      - name: mind-track-container
+        image: 304534110140.dkr.ecr.ap-south-1.amazonaws.com/mind-track-app
+        ports:
+        - containerPort: 80
