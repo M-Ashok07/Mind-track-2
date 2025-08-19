@@ -31,16 +31,16 @@ phases:
       - echo "Building Docker image..."
       - docker build -t $IMAGE_URI -f Dockerfile .
   post_build:
-    commands:
-      - echo "Pushing image to ECR..."
-      - docker push $IMAGE_URI
-      - echo "Substituting image URI in deployment manifest..."
-      - export IMAGE_URI
-      - echo "Updating kubeconfig..."
-      - aws eks update-kubeconfig --region $REGION --name $CLUSTER
-      - echo "Applying Kubernetes manifests..."
-      - kubectl apply -f dist/k8s/deployment-final.yaml
-      - kubectl apply -f dist/k8s/service.yaml
-      - kubectl apply -f dist/k8s/ingress.yaml
+  commands:
+    - echo "Pushing image to ECR..."
+    - docker push $IMAGE_URI
+    - echo "Substituting image URI in deployment manifest..."
+    - export IMAGE_URI
+    - echo "Updating kubeconfig..."
+    - aws eks update-kubeconfig --region $REGION --name $CLUSTER
+    - echo "Applying Kubernetes manifests..."
+    - kubectl apply -f k8s/deployment-final.yaml
+    - kubectl apply -f k8s/service.yaml
+    - kubectl apply -f k8s/ingress.yaml
 
 
