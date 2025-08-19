@@ -29,7 +29,7 @@ phases:
       - echo "Checking files before docker build..."
       - pwd && ls -al
       - echo "Building Docker image..."
-      - docker build -t $IMAGE_URI -f dist/Dockerfile dist/
+      - docker build -t $IMAGE_URI -f Dockerfile .
   post_build:
     commands:
       - echo "Pushing image to ECR..."
