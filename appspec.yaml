@@ -1,0 +1,11 @@
+version: 0.0
+resources:
+  - myApp:
+      type: Kubernetes
+      properties:
+        clusterName: mind-track-cluster
+        namespace: default
+        manifestFilePaths:
+          - k8s/deployment.yaml
+          - k8s/service.yaml
+          - k8s/ingress.yaml
