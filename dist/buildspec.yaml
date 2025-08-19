@@ -9,7 +9,7 @@ env:
 phases:
   install:
     commands:
-      - echo "Installing kubectl, gettext (envsubst), and jq..."
+      - echo "Installing kubectl..."
       - curl -sSL -o /usr/local/bin/kubectl https://amazon-eks.s3.${REGION}.amazonaws.com/1.29.0/2024-04-19/bin/linux/amd64/kubectl
       - chmod +x /usr/local/bin/kubectl
 
@@ -24,8 +24,10 @@ phases:
 
   build:
     commands:
-      - echo "Building Docker image from Dockerfile..."
-      - docker build -t $IMAGE_URI .
+      - echo "Checking files before docker build..."
+      - pwd && ls -al
+      - echo "Building Docker image..."
+      - docker build -t $IMAGE_URI -f dist/Dockerfile dist/
 
   post_build:
     commands:
@@ -33,14 +35,14 @@ phases:
       - docker push $IMAGE_URI
       - echo "Substituting image URI in deployment manifest..."
       - export IMAGE_URI
-      - envsubst < k8s/deployment.yaml > k8s/deployment-final.yaml
+      - envsubst < dist/k8s/deployment.yaml > dist/k8s/deployment-final.yaml
       - echo "Updating kubeconfig..."
       - aws eks update-kubeconfig --region $REGION --name $CLUSTER
       - echo "Applying Kubernetes manifests..."
-      - kubectl apply -f k8s/deployment-final.yaml
-      - kubectl apply -f k8s/service.yaml
-      - kubectl apply -f k8s/ingress.yaml
+      - kubectl apply -f dist/k8s/deployment-final.yaml
+      - kubectl apply -f dist/k8s/service.yaml
+      - kubectl apply -f dist/k8s/ingress.yaml
 
 artifacts:
   files:
-    - k8s/deployment-final.yaml
+    - dist/k8s/deployment-final.yaml
