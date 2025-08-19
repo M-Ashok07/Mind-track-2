@@ -12,7 +12,8 @@ phases:
       - echo "Installing kubectl and envsubst"
       - curl -sSL -o /usr/local/bin/kubectl https://amazon-eks.s3.$REGION.amazonaws.com/1.29.0/2024-04-19/bin/linux/amd64/kubectl
       - chmod +x /usr/local/bin/kubectl
-      - apt update && apt install -y gettext jq
+      - sudo apt-get update  
+      - sudo apt install -y gettext jq
 
   pre_build:
     commands:
