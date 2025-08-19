@@ -30,18 +30,12 @@ phases:
       - pwd && ls -al
       - echo "Building Docker image..."
       - docker build -t $IMAGE_URI -f dist/Dockerfile dist/
-      - envsubst < k8s/deployment.yaml > k8s/deployment-final.yaml
-      - kubectl apply -f k8s/deployment-final.yaml -n mind-track
-      - kubectl apply -f k8s/service.yaml -n mind-track
-      - kubectl apply -f k8s/ingress.yaml -n mind-track
-
   post_build:
     commands:
       - echo "Pushing image to ECR..."
       - docker push $IMAGE_URI
       - echo "Substituting image URI in deployment manifest..."
       - export IMAGE_URI
-      - envsubst < dist/k8s/deployment.yaml > dist/k8s/deployment-final.yaml
       - echo "Updating kubeconfig..."
       - aws eks update-kubeconfig --region $REGION --name $CLUSTER
       - echo "Applying Kubernetes manifests..."
